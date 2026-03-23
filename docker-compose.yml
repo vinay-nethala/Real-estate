@@ -1,0 +1,27 @@
+services:
+  app:
+    build: .
+    ports:
+      - "3006:3006"
+    environment:
+      - VITE_MAPBOX_ACCESS_TOKEN=${MAPBOX_ACCESS_TOKEN}
+      - VITE_MAPBOX_STYLE=${MAPBOX_STYLE}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3006"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  puppeteer-integration-tests:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    depends_on:
+      app:
+        condition: service_healthy
+    environment:
+      - APP_URL=http://app:3006
+      - MAPBOX_ACCESS_TOKEN=${MAPBOX_ACCESS_TOKEN}
+    volumes:
+      - ./test-results:/app/test-results
+    command: npm run test:integration
